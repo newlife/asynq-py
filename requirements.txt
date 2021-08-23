@@ -1,1 +1,2 @@
 protobuf==3.17.3
+redis==3.5.3

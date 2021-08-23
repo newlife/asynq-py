@@ -2,16 +2,36 @@ import uuid
 import time
 
 
+TaskState = {"active": 1, "pending": 2, "scheduled": 3, "retry": 4, "archived": 5}
+
+
+class Task:
+    def __init__(self, typename, payload):
+        self.typename = typename
+        self.payload = payload
+
+
+class Option:
+    def __init__(self):
+        self.retry = 0
+        self.queue = "default"
+        self.timeout = 0
+        self.deadline = None
+        self.unique_ttl = None
+        self.process_at = None
+
+
 class TaskInfo:
     def __init__(self, args):
+        self.id = uuid.uuid4()  # ID is a unique identifier for each task.
         self.type = ""
         # Type indicates the kind of the task to be performed , user defined
 
-        self.payload = {}  # Payload holds data needed to process the task
-        self.id = uuid.uuid4()  # ID is a unique identifier for each task.
         self.queue = "default"
         # Queue is a name this message should be enqueued to.
-        self.retry = 0  # Retry is the max number of retry for this task.
+
+        self.payload = b""  # Payload holds data needed to process the task
+        self.max_retry = 0  # Retry is the max number of retry for this task.
         self.retried = 0
         # Retried is the number of times we've retried this task so far.
 
@@ -42,11 +62,10 @@ class TaskInfo:
         # UniqueKey holds the redis key used for uniqueness lock for this task.
         # Empty string indicates that no uniqueness lock was used.
 
+    @property
+    def task_key(self):
+        return f"asynq:{self.queue_name}:{self.id}"
 
-class Task:
-    def __init__(self, name, payload):
-        self.name = name
-        self.payload = payload
-
-    def enqueue(self, option):
-        pass
+    @property
+    def pending_key(self):
+        return f"asynq:{self.queue_name}:pending"

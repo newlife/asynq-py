@@ -1,3 +1,5 @@
+import datetime import datetime, timedelta
+
 AllServers = "asynq:servers"  # ZSET
 AllWorkers = "asynq:workers"  # ZSET
 AllSchedulers = "asynq:schedulers"  # ZSET
@@ -7,4 +9,6 @@ CancelChannel = "asynq:cancel"  # PubSub channel
 
 DefaultQueueName = "default"
 
-TaskState = {"active": 1, "pending": 2, "scheduled": 3, "retry": 4, "archived": 5}
+
+DefaultMaxRetry = 25
+DefaultTimeout = 30 * timedelta(minutes=1)
