@@ -1,5 +1,5 @@
 from uuid import uuid4
-from constant import DefaultQueueName, AllQueues
+from constant import AllQueues
 from task import Option
 from proto.asynq_pb2 import TaskMessage
 import redis
@@ -41,7 +41,5 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
-        print(key_list)
-        print(arg_list)
         enqueue_cmd = self.redis.register_script(enqueue_script)
         enqueue_cmd(keys=key_list, args=arg_list)
