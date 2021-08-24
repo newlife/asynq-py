@@ -1,24 +1,32 @@
 import uuid
 import time
-
+import json
+from datetime import datetime, timedelta
 
 TaskState = {"active": 1, "pending": 2, "scheduled": 3, "retry": 4, "archived": 5}
 
+DefaultMaxRetry = 25
+DefaultTimeout = 30 * 60
+
 
 class Task:
-    def __init__(self, typename, payload):
-        self.typename = typename
+    def __init__(self, type_name, payload):
+        self.type = type_name
         self.payload = payload
+
+    @property
+    def bytes_payload(self):
+        return json.dumps(self.payload).encode()
 
 
 class Option:
     def __init__(self):
-        self.retry = 0
+        self.retry = DefaultMaxRetry
         self.queue = "default"
-        self.timeout = 0
+        self.timeout = DefaultTimeout
         self.deadline = None
-        self.unique_ttl = None
-        self.process_at = None
+        self.unique_ttl = 0
+        self.process_at = time.time
 
 
 class TaskInfo:

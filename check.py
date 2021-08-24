@@ -1,7 +1,7 @@
-from proto.asynq_pb2 import TaskMessage
-import json
+from task import Task, Option
+from client import Client
 
-task_message = TaskMessage()
-task_message.type = "my_type"
-task_message.id = "sddsdsd"
-task_message.payload = bytes(json.dumps({"uid": 100}), "utf8")
+task = Task("test_aa", {"aa": 1})
+
+c = Client()
+c.enqueue(task)
