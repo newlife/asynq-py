@@ -7,6 +7,8 @@ import redis
 r = redis.Redis()
 r = redis.Redis(host="localhost", port=6379, db=0)
 
+
+
 enqueue_script = """
 redis.call("HSET", KEYS[1],
            "msg", ARGV[1],
@@ -30,10 +32,12 @@ class Client:
         task_message.payload = task.bytes_payload
         task_message.queue = option.queue
         task_message.retry = option.retry
+        task_message.timeout = option.timeout
+        task_message.deadline = option.deadline
 
         self.redis.sadd(AllQueues, task_message.queue)
-        task_key = f"asynq:{option.queue}:{task_message.id}"
-        pending_key = f"asynq:{option.queue}:pending"
+        task_key = f"asynq:{{{option.queue}}}:{task_message.id}"
+        pending_key = f"asynq:{{{option.queue}}}:pending"
         key_list = [task_key, pending_key]
         arg_list = [
             task_message.SerializeToString(),
@@ -41,5 +45,6 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
+        print(arg_list)
         enqueue_cmd = self.redis.register_script(enqueue_script)
         enqueue_cmd(keys=key_list, args=arg_list)

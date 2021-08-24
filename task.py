@@ -23,9 +23,9 @@ class Option:
         self.retry = DefaultMaxRetry
         self.queue = "default"
         self.timeout = DefaultTimeout
-        self.deadline = None
+        self.deadline = 0
         self.unique_ttl = 0
-        self.process_at = time.time
+        self.process_at = time.time() * 1000000
 
 
 class TaskInfo:
