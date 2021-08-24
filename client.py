@@ -36,7 +36,7 @@ class Client:
         task_message.deadline = option.deadline
 
         self.redis.sadd(AllQueues, task_message.queue)
-        task_key = f"asynq:{{{option.queue}}}:{task_message.id}"
+        task_key = f"asynq:{{{option.queue}}}:t:{task_message.id}"
         pending_key = f"asynq:{{{option.queue}}}:pending"
         key_list = [task_key, pending_key]
         arg_list = [
