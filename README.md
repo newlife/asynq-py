@@ -2,7 +2,7 @@
 
 related https://github.com/hibiken/asynq/
 
-```
+```python
 from task import Task, Option
 from client import Client
 

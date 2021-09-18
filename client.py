@@ -46,7 +46,7 @@ class Client:
         task_message.timeout = option.timeout
         task_message.deadline = option.deadline
 
-        if option.process_at < datetime.now():
+        if option.process_at < datetime.now().timestamp():
             self.enqueue_now(self,task_message,option)
         else:
             self.schedule(self,task_message,option)
@@ -76,5 +76,7 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
-
-        pass
+        print(key_list)
+        print(arg_list)
+        schedule_cmd = self.redis.register_script(schedule_script)
+        schedule_cmd(keys=key_list, args=arg_list)
