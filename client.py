@@ -62,22 +62,20 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
-        print(arg_list)
         enqueue_cmd = self.redis.register_script(enqueue_script)
         enqueue_cmd(keys=key_list, args=arg_list)
 
     def schedule(self, task_message, option):
         self.redis.sadd(AllQueues, task_message.queue)
-        task_key = f"asynq:{{{option.queue}}}:{task_message.id}"
+        task_key = f"asynq:{{{option.queue}}}:t:{task_message.id}"
         scheduled_key = f"asynq:{{{option.queue}}}:scheduled"
         key_list = [task_key, scheduled_key]
         arg_list = [
             task_message.SerializeToString(),
+            option.process_at,
             task_message.id,
             task_message.timeout,
             task_message.deadline,
         ]
-        print(key_list)
-        print(arg_list)
         schedule_cmd = self.redis.register_script(schedule_script)
         schedule_cmd(keys=key_list, args=arg_list)
