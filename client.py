@@ -1,5 +1,6 @@
 from uuid import uuid4
-from datetime import datetime ,timedelta
+import time
+from datetime import datetime, timedelta
 
 from constant import AllQueues
 from task import Option
@@ -8,8 +9,6 @@ import redis
 
 r = redis.Redis()
 r = redis.Redis(host="localhost", port=6379, db=0)
-
-
 
 enqueue_script = """
 redis.call("HSET", KEYS[1],
@@ -21,7 +20,7 @@ redis.call("LPUSH", KEYS[2], ARGV[2])
 return 1
 """
 
-schedule_script="""
+schedule_script = """
 redis.call("HSET", KEYS[1],
            "msg", ARGV[1],
            "state", "scheduled",
@@ -30,6 +29,7 @@ redis.call("HSET", KEYS[1],
 redis.call("ZADD", KEYS[2], ARGV[2], ARGV[3])
 return 1
 """
+
 
 class Client:
     def __init__(self):
@@ -46,14 +46,14 @@ class Client:
         task_message.timeout = option.timeout
         task_message.deadline = option.deadline
 
-        if option.process_at < datetime.now().timestamp():
-            self.enqueue_now(self,task_message,option)
+        if option.process_at < time.time():
+            self.enqueue_now(task_message, option)
         else:
-            self.schedule(self,task_message,option)
+            self.schedule(task_message, option)
 
-    def enqueue_now(self,task_message,option):
+    def enqueue_now(self, task_message, option):
         self.redis.sadd(AllQueues, task_message.queue)
-        task_key = f"asynq:{{{option.queue}}}:{task_message.id}"
+        task_key = f"asynq:{{{option.queue}}}:t:{task_message.id}"
         pending_key = f"asynq:{{{option.queue}}}:pending"
         key_list = [task_key, pending_key]
         arg_list = [
@@ -62,10 +62,11 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
+        print(arg_list)
         enqueue_cmd = self.redis.register_script(enqueue_script)
         enqueue_cmd(keys=key_list, args=arg_list)
 
-    def schedule(self,task_message,option):
+    def schedule(self, task_message, option):
         self.redis.sadd(AllQueues, task_message.queue)
         task_key = f"asynq:{{{option.queue}}}:{task_message.id}"
         scheduled_key = f"asynq:{{{option.queue}}}:scheduled"
