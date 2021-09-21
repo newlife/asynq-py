@@ -2,12 +2,12 @@
 
 related https://github.com/hibiken/asynq/
 
+
 ```python
-from task import Task, Option
 from client import Client
+from task import Task
 
-task = Task("test_aa", {"aa": 1})
-
+task = Task("email:welcome", {"UserID": 222})
 c = Client()
 c.enqueue(task)
 ```
