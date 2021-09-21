@@ -1,6 +1,7 @@
 import uuid
 import time
 import json
+from datetime import datetime ,timedelta
 
 TaskState = {"active": 1, "pending": 2, "scheduled": 3, "retry": 4, "archived": 5}
 
@@ -25,7 +26,7 @@ class Option:
         self.timeout = DefaultTimeout
         self.deadline = 0
         self.unique_ttl = 0
-        self.process_at = time.time() * 1000000
+        self.process_at = time.time()
 
 
 class TaskInfo:
@@ -71,7 +72,7 @@ class TaskInfo:
 
     @property
     def task_key(self):
-        return f"asynq:{self.queue_name}:{self.id}"
+        return f"asynq:{self.queue_name}:t:{self.id}"
 
     @property
     def pending_key(self):
