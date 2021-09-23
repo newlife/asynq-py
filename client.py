@@ -30,11 +30,30 @@ redis.call("ZADD", KEYS[2], ARGV[2], ARGV[3])
 return 1
 """
 
+enqueue_unique_script = """
+local ok = redis.call("SET", KEYS[1], ARGV[1], "NX", "EX", ARGV[2])
+if not ok then
+  return 0
+end
+redis.call("HSET", KEYS[2],
+           "msg", ARGV[3],
+           "state", "pending",
+           "timeout", ARGV[4],
+           "deadline", ARGV[5],
+           "unique_key", KEYS[1])
+redis.call("LPUSH", KEYS[3], ARGV[1])
+return 1
+"""
+
 
 class Client:
     def __init__(self):
         self.redis = r
         self.opts = {}
+        self.enqueue_cmd = self.redis.register_script(enqueue_script)
+        self.schedule_cmd = self.redis.register_script(schedule_script)
+        self.enqueue_unique_cmd = self.redis.register_script(
+            enqueue_unique_script)
 
     def enqueue(self, task, option=Option()):
         task_message = TaskMessage()
@@ -45,7 +64,8 @@ class Client:
         task_message.retry = option.retry
         task_message.timeout = option.timeout
         task_message.deadline = option.deadline
-
+        if option.unique_ttl > 0:
+            self.enqueue_unique(task_message, option)
         if option.process_at < time.time():
             self.enqueue_now(task_message, option)
         else:
@@ -62,8 +82,8 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
-        enqueue_cmd = self.redis.register_script(enqueue_script)
-        enqueue_cmd(keys=key_list, args=arg_list)
+
+        self.enqueue_cmd(keys=key_list, args=arg_list)
 
     def schedule(self, task_message, option):
         self.redis.sadd(AllQueues, task_message.queue)
@@ -77,5 +97,19 @@ class Client:
             task_message.timeout,
             task_message.deadline,
         ]
-        schedule_cmd = self.redis.register_script(schedule_script)
-        schedule_cmd(keys=key_list, args=arg_list)
+
+        self.schedule_cmd(keys=key_list, args=arg_list)
+
+    def enqueue_unique(self, task_message, option):
+        self.redis.sadd(AllQueues, task_message.queue)
+        task_key = f"asynq:{{{option.queue}}}:t:{task_message.id}"
+        pending_key = f"asynq:{{{option.queue}}}:pending"
+        key_list = [task_key, pending_key]
+        arg_list = [
+            task_message.SerializeToString(),
+            option.process_at,
+            task_message.id,
+            task_message.timeout,
+            task_message.deadline,
+        ]
+        self.enqueue_unique_cmd(keys=key_list, args=arg_list)
